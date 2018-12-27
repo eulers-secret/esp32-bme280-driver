@@ -34,6 +34,7 @@ void print_sensor_data(struct bme280_data *comp_data)
            comp_data->pressure, comp_data->humidity);
 }
 
+/* Only writes 1 byte to i2c for now, but the driver only wants to write 1 byte, so it works. */
 static uint8_t write_register(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
   ESP_LOGD(LOG_BME, "----write_register()----\n");
   ESP_LOGD(LOG_BME, "\treg_addr: %#x\n", reg_addr);
@@ -49,16 +50,16 @@ static uint8_t write_register(uint8_t id, uint8_t reg_addr, uint8_t *data, uint1
   i2c_master_write(cmd, data, len, 1);
   i2c_master_stop(cmd);
 
-  esp_err_t ret = i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000 / portTICK_RATE_MS);
+  err = i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000 / portTICK_RATE_MS);
   i2c_cmd_link_delete(cmd);
-  if (ret == ESP_OK) {
+  if (err == ESP_OK) {
     ESP_LOGD(LOG_BME, "Write OK\n");
-  } else if (ret == ESP_ERR_TIMEOUT) {
+  } else if (err == ESP_ERR_TIMEOUT) {
     ESP_LOGE(LOG_BME, "Bus is busy\n");
   } else {
     ESP_LOGE(LOG_BME, "Write Failed\n");
   }
-return ret;
+return err;
 }
 
 static uint8_t read_register(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len) {
@@ -138,15 +139,7 @@ void user_delay_ms(uint32_t period)
 
 int8_t user_i2c_write(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len)
 {
-
-  write_register(id, reg_addr, data, len);
-  /* int8_t *buf; */
-  /* buf = malloc(len +1); */
-  /* buf[0] = reg_addr; */
-  /* memcpy(buf +1, data, len); */
-  /* write(fd, buf, len +1); */
-  /* free(buf); */
-  return 0;
+  return write_register(id, reg_addr, data, len);;
 }
 
 void task_bme280(void *ignore) {
