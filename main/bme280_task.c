@@ -10,9 +10,14 @@ double centigrade_to_fahrenheit(uint32_t centigrade) {
 
 void print_sensor_data(struct bme280_data *comp_data)
 {
+  #ifdef BME280_FLOAT_ENABLE
+  ESP_LOGI(LOG_BME, "temp %.02fC, p %f, hum %f\r\n",
+           comp_data->temperature, comp_data->pressure, comp_data->humidity);
+  #else
   ESP_LOGI(LOG_BME, "temp %.02fF, p %zu, hum %zu\r\n",
            centigrade_to_fahrenheit(comp_data->temperature),
            comp_data->pressure, comp_data->humidity);
+  #endif
 }
 
 /* Only writes 1 byte to i2c for now, but the driver only wants to write 1 byte, so it works. */
