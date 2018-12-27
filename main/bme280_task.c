@@ -10,7 +10,6 @@ double centigrade_to_fahrenheit(uint32_t centigrade) {
 
 void print_sensor_data(struct bme280_data *comp_data)
 {
-  //printf("temp %.02fF, p %zu, hum %zu\r\n", centigrade_to_fahrenheit(comp_data->temperature), comp_data->pressure, comp_data->humidity);
   ESP_LOGI(LOG_BME, "temp %.02fF, p %zu, hum %zu\r\n",
            centigrade_to_fahrenheit(comp_data->temperature),
            comp_data->pressure, comp_data->humidity);
@@ -75,6 +74,28 @@ static uint8_t read_register(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16
 	return err;
 }
 
+int8_t user_i2c_read(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len)
+{
+  ESP_LOGD(LOG_BME, "----user_i2c_read()----\n");
+  ESP_LOGD(LOG_BME, "\treg_addr: %#x\n", reg_addr);
+  ESP_LOGD(LOG_BME, "\tlen: %d\n", len);
+  if (read_register(id, reg_addr, data, len) != BME280_OK)
+    return 1;
+  ESP_LOGD(LOG_BME, "\tdata: %#x\n", *data);
+  ESP_LOGD(LOG_BME, "----end user_i2c_read()----\n");
+  return 0;
+}
+
+int8_t user_i2c_write(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len)
+{
+  return write_register(id, reg_addr, data, len);;
+}
+
+void user_delay_ms(uint32_t period)
+{
+  vTaskDelay(pdMS_TO_TICKS(period));
+}
+
 int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
 {
   int8_t rslt;
@@ -102,28 +123,6 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
   return rslt;
 }
 
-int8_t user_i2c_read(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len)
-{
-  ESP_LOGD(LOG_BME, "----user_i2c_read()----\n");
-  ESP_LOGD(LOG_BME, "\treg_addr: %#x\n", reg_addr);
-  ESP_LOGD(LOG_BME, "\tlen: %d\n", len);
-  if (read_register(id, reg_addr, data, len) != BME280_OK)
-    return 1;
-  ESP_LOGD(LOG_BME, "\tdata: %#x\n", *data);
-  ESP_LOGD(LOG_BME, "----end user_i2c_read()----\n");
-  return 0;
-}
-
-void user_delay_ms(uint32_t period)
-{
-  vTaskDelay(pdMS_TO_TICKS(period));
-}
-
-int8_t user_i2c_write(uint8_t id, uint8_t reg_addr, uint8_t *data, uint16_t len)
-{
-  return write_register(id, reg_addr, data, len);;
-}
-
 void task_bme280(void *ignore) {
   struct bme280_dev dev;
 
@@ -147,7 +146,8 @@ void task_bme280(void *ignore) {
   int8_t rslt = bme280_init(&dev);
   ESP_LOGD(LOG_BME, "rslt: %d\n", rslt);
 
+  //Loops forever, never returns.
   stream_sensor_data_forced_mode(&dev);
-  
+
 	vTaskDelete(NULL);
 }
