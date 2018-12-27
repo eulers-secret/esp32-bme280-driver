@@ -147,9 +147,7 @@ void task_bme280(void *ignore) {
   int8_t rslt = bme280_init(&dev);
   ESP_LOGD(LOG_BME, "rslt: %d\n", rslt);
 
-	while(1) {
-    stream_sensor_data_forced_mode(&dev);
-		vTaskDelay(1000/portTICK_PERIOD_MS);
-	}
+  stream_sensor_data_forced_mode(&dev);
+  
 	vTaskDelete(NULL);
 }
