@@ -4,19 +4,30 @@
 #define NACK_VAL 0x1 /*!< I2C nack value */
 static char* LOG_BME = "BME280";
 
+/* Doesn't work if BME280_FLOAT_ENABLE is set */
 double centigrade_to_fahrenheit(uint32_t centigrade) {
 	return ((double)centigrade)/100 * 9 / 5 + 32.0;
 }
 
+/*********************************************************************************************************/
+/* Temperature is in DegC, resolution is 0.01 DegC.                                                      */
+/* Value of “5123” equals 51.23 DegC.                                                                    */
+/* Pressure is in Pa as unsigned 32 bit integer in Q24.8 format (24 integer bits and 8 fractional bits). */
+/* Value of “24674867” represents 24674867/256 = 96386.2 Pa = 963.862 hPa                                */
+/* Humidity is in %RH as unsigned 32 bit integer in Q22.10 format (22 integer and 10 fractional bits).   */
+/* Value of “47445” represents 47445/1024 = 46.333 %RH                                                   */
+/*********************************************************************************************************/
+/* If BME280_FLOAT_ENABLE is set, output temp in degrees C. */
 void print_sensor_data(struct bme280_data *comp_data)
 {
   #ifdef BME280_FLOAT_ENABLE
-  ESP_LOGI(LOG_BME, "temp %.02fC, p %f, hum %f\r\n",
+  ESP_LOGI(LOG_BME, "temp %.2fC, p %f, hum %f\r\n",
            comp_data->temperature, comp_data->pressure, comp_data->humidity);
   #else
-  ESP_LOGI(LOG_BME, "temp %.02fF, p %zu, hum %zu\r\n",
+  ESP_LOGI(LOG_BME, "temp %.2fF, p %zu, hum %.2f\r\n",
            centigrade_to_fahrenheit(comp_data->temperature),
-           comp_data->pressure, comp_data->humidity);
+           comp_data->pressure,
+           (double)comp_data->humidity/1024);
   #endif
 }
 
@@ -128,6 +139,37 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
   return rslt;
 }
 
+int8_t stream_sensor_data_normal_mode(struct bme280_dev *dev)
+{
+	int8_t rslt;
+	uint8_t settings_sel;
+	struct bme280_data comp_data;
+
+	/* Recommended mode of operation: Indoor navigation */
+	dev->settings.osr_h = BME280_OVERSAMPLING_1X;
+	dev->settings.osr_p = BME280_OVERSAMPLING_16X;
+	dev->settings.osr_t = BME280_OVERSAMPLING_2X;
+	dev->settings.filter = BME280_FILTER_COEFF_16;
+	dev->settings.standby_time = BME280_STANDBY_TIME_62_5_MS;
+
+	settings_sel = BME280_OSR_PRESS_SEL;
+	settings_sel |= BME280_OSR_TEMP_SEL;
+	settings_sel |= BME280_OSR_HUM_SEL;
+	settings_sel |= BME280_STANDBY_SEL;
+	settings_sel |= BME280_FILTER_SEL;
+	rslt = bme280_set_sensor_settings(settings_sel, dev);
+	rslt = bme280_set_sensor_mode(BME280_NORMAL_MODE, dev);
+
+	while (1) {
+		/* Delay while the sensor completes a measurement */
+		dev->delay_ms(70);
+		rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);
+		print_sensor_data(&comp_data);
+	}
+
+	return rslt;
+}
+
 void task_bme280(void *ignore) {
   struct bme280_dev dev;
 
@@ -152,7 +194,8 @@ void task_bme280(void *ignore) {
   ESP_LOGD(LOG_BME, "rslt: %d\n", rslt);
 
   //Loops forever, never returns.
-  stream_sensor_data_forced_mode(&dev);
+  //stream_sensor_data_forced_mode(&dev);
+  stream_sensor_data_normal_mode(&dev);
 
 	vTaskDelete(NULL);
 }
