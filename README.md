@@ -1,5 +1,7 @@
 # BME280 Example
 
+I added the Apache 2.0 license, but because I have copied code from Bosch, the Apache license should only apply to what little original code there is here.
+
 This is a direct port of the BME280 sensor API from Bosch: https://github.com/BoschSensortec/BME280_driver
 
 Changes made to the driver are VERY minimal:
@@ -9,6 +11,7 @@ Changes made to the driver are VERY minimal:
  There's still a lot that'd be nice to do, but this is functional enough for the project I intend to use it for (environmental monitoring and reporting via MQTT over wifi)
  
 # TODO/Nice to have:
+ * Support the SPI interface
  * Better error reporting/handling - for example, a macro to check results and report.
  * Fix the write function to write >1 byte. Currently the driver only ever writes a single byte, so this works and is simple. It'd be nice to fix, though.
  * Better testing - I tested forced mode and normal mode. There is no testing at the API level or, really, any testing at all beyond "It works for me!"

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2018, Brian Lovin, All rights reserved.
+ */
+
 #include "bme280_task.h"
 
 #define ACK_VAL 0x0  /*!< I2C ack value */

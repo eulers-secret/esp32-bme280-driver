@@ -1,6 +1,7 @@
 /* BME280 Example
-   More interesting details are in bme280_task.c
-*/
+ * More interesting details are in bme280_task.c
+ * Copyright 2018, Brian Lovin, All rights reserved.
+ */
 #include <stdio.h>
 
 #include "bme280_task.h"
