@@ -182,6 +182,8 @@ int8_t stream_sensor_data_normal_mode(struct bme280_dev *dev)
   }
 
 	while (1) {
+    ESP_LOGD(LOG_BME, "HighWaterMark: %d bytes\n", uxTaskGetStackHighWaterMark(NULL));
+
 		/* Delay while the sensor completes a measurement */
 		dev->delay_ms(70);
 		rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);

@@ -27,5 +27,5 @@ void app_main()
             (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 
     //TODO: Figure out proper stack size
-    xTaskCreate(&task_bme280, "task_bme280", 8192, NULL, 5, NULL);
+    xTaskCreate(&task_bme280, "task_bme280", 2048, NULL, 5, NULL);
 }
