@@ -13,4 +13,4 @@ Changes made to the driver are VERY minimal:
  * Fix the write function to write >1 byte. Currently the driver only ever writes a single byte, so this works and is simple. It'd be nice to fix, though.
  * Better testing - I tested forced mode and normal mode. There is no testing at the API level or, really, any testing at all beyond "It works for me!"
  * Incorporate Kconfig into the options for the BME280 - this would be pretty easy, just some yes/no questions for the above 2 header changes. There's probably more to add, too.
- * Figure out stack size to use, the current is just a guess and probably way too large.
+ * Figure out why 32-bit and 64-bit options use the same amount of stack. Also audit the driver to ensure we don't blow the smaller 2KB stack.
