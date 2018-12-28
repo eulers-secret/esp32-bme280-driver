@@ -27,7 +27,7 @@ void print_sensor_data(struct bme280_data *comp_data)
   ESP_LOGI(LOG_BME, "temp %.2fF, p %zu, hum %.2f\r\n",
            centigrade_to_fahrenheit(comp_data->temperature),
            comp_data->pressure,
-           (double)comp_data->humidity/1024);
+           (float)comp_data->humidity/1024);
   #endif
 }
 
