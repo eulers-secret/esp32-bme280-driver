@@ -38,6 +38,11 @@ static uint8_t write_register(uint8_t id, uint8_t reg_addr, uint8_t *data, uint1
   ESP_LOGD(LOG_BME, "\tlen: %d\n", len);
   ESP_LOGD(LOG_BME, "\tdata: %#x\n", *data);
 
+  if (len > 1) {
+    ESP_LOGE(LOG_BME, "Cannot write more than 1 byte!\n");
+    return ESP_FAIL;
+  }
+
   i2c_cmd_handle_t cmd = i2c_cmd_link_create();
   esp_err_t err = BME280_OK;
   i2c_master_start(cmd);
@@ -127,6 +132,10 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
   settings_sel = BME280_OSR_PRESS_SEL | BME280_OSR_TEMP_SEL | BME280_OSR_HUM_SEL | BME280_FILTER_SEL;
 
   rslt = bme280_set_sensor_settings(settings_sel, dev);
+  if (rslt != BME280_OK) {
+    ESP_LOGE(LOG_BME, "Error setting BME280 settings: %d\n", rslt);
+    abort();
+  }
 
   /* Continuously stream sensor data */
   while (1) {
@@ -134,6 +143,10 @@ int8_t stream_sensor_data_forced_mode(struct bme280_dev *dev)
     /* Wait for the measurement to complete and print data @25Hz */
     dev->delay_ms(1000);
     rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);
+    if (rslt != BME280_OK) {
+      ESP_LOGE(LOG_BME, "Error getting BME280 data: %d\n", rslt);
+      abort();
+    }
     print_sensor_data(&comp_data);
   }
   return rslt;
@@ -158,12 +171,24 @@ int8_t stream_sensor_data_normal_mode(struct bme280_dev *dev)
 	settings_sel |= BME280_STANDBY_SEL;
 	settings_sel |= BME280_FILTER_SEL;
 	rslt = bme280_set_sensor_settings(settings_sel, dev);
+  if (rslt != BME280_OK) {
+    ESP_LOGE(LOG_BME, "Error setting BME280 settings: %d\n", rslt);
+    abort();
+  }
 	rslt = bme280_set_sensor_mode(BME280_NORMAL_MODE, dev);
+  if (rslt != BME280_OK) {
+    ESP_LOGE(LOG_BME, "Error setting BME280 mode: %d\n", rslt);
+    abort();
+  }
 
 	while (1) {
 		/* Delay while the sensor completes a measurement */
 		dev->delay_ms(70);
 		rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, dev);
+    if (rslt != BME280_OK) {
+      ESP_LOGE(LOG_BME, "Error getting BME280 data: %d\n", rslt);
+      abort();
+    }
 		print_sensor_data(&comp_data);
 	}
 
@@ -191,7 +216,10 @@ void task_bme280(void *ignore) {
   dev.delay_ms = user_delay_ms;
 
   int8_t rslt = bme280_init(&dev);
-  ESP_LOGD(LOG_BME, "rslt: %d\n", rslt);
+  if (rslt != BME280_OK) {
+    ESP_LOGE(LOG_BME, "Error initializing BME280: %d\n", rslt);
+    abort();
+  }
 
   //Loops forever, never returns.
   //stream_sensor_data_forced_mode(&dev);
